@@ -53,9 +53,10 @@ def crawling(args):
                         if each_press in infos[0].text:
                             if '한국경제TV' in infos[0].text or '매일경제TV' in infos[0].text:
                                 continue
-                            press_name = each_press
-                            break
-                    info_naver = infos[1]
+                            else:
+                                press_name = each_press
+                                info_naver = infos[1]
+                                break
                 else:
                     continue
 
