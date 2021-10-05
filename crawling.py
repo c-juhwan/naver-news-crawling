@@ -13,8 +13,6 @@ headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleW
 def crawling(args):
     print('Start crawling! Keyword: {} Start date: {} End date: {} Exact search: {}'.format(args.search_keyword, args.start_date, args.end_date, args.exact_search))
 
-    driver = webdriver.Chrome(args.webdriver_path)
-
     if args.start_date is None:
         news_url = 'https://search.naver.com/search.naver?where=news&sm=tab_jum&query={}'
         news_url = news_url.format(args.search_keyword)
@@ -51,12 +49,17 @@ def crawling(args):
                 if any(press in infos[0].text for press in args.allowed_press):
                     for each_press in args.allowed_press:
                         if each_press in infos[0].text:
-                            if '한국경제TV' in infos[0].text or '매일경제TV' in infos[0].text:
+                            if any(press in infos[0].text for press in args.excluded_press):
+                                # 제외 언론사에 해당하면 건너뜀
                                 continue
                             else:
-                                press_name = each_press
-                                info_naver = infos[1]
-                                break
+                                if len(infos) == 2:
+                                    press_name = each_press
+                                    info_naver = infos[1]
+                                    break
+                                else: 
+                                    # 네이버 뉴스 URL이 제공되지 않을 시 건너뜀
+                                    continue
                 else:
                     continue
 
@@ -79,6 +82,8 @@ def crawling(args):
                     break
 
     # Article content / publish_date / modify_date / reaction
+    driver = webdriver.Chrome(args.webdriver_path)
+
     for idx in tqdm(range(len(news_dict)), desc='Crawling article content'):
         driver.get(news_dict[idx]['url'])
         time.sleep(3)
@@ -102,11 +107,18 @@ def crawling(args):
             news_dict[idx]['modify_date'] = dates[1].string
 
         # 기사 반응
-        reaction_good = driver.find_element_by_xpath('/html/body/div[2]/table/tbody/tr/td[1]/div/div[2]/div[7]/div[1]/ul/li[1]/a/span[2]').get_attribute('innerHTML')
-        reaction_warm = driver.find_element_by_xpath('/html/body/div[2]/table/tbody/tr/td[1]/div/div[2]/div[7]/div[1]/ul/li[2]/a/span[2]').get_attribute('innerHTML')
-        reaction_sad = driver.find_element_by_xpath('/html/body/div[2]/table/tbody/tr/td[1]/div/div[2]/div[7]/div[1]/ul/li[3]/a/span[2]').get_attribute('innerHTML')
-        reaction_angry = driver.find_element_by_xpath('/html/body/div[2]/table/tbody/tr/td[1]/div/div[2]/div[7]/div[1]/ul/li[4]/a/span[2]').get_attribute('innerHTML')
-        reaction_want = driver.find_element_by_xpath('/html/body/div[2]/table/tbody/tr/td[1]/div/div[2]/div[7]/div[1]/ul/li[5]/a/span[2]').get_attribute('innerHTML')
+        try:
+            reaction_good = driver.find_element_by_xpath('//*[@id="spiLayer"]/div[1]/ul/li[1]/a/span[2]').get_attribute('innerHTML')
+            reaction_warm = driver.find_element_by_xpath('//*[@id="spiLayer"]/div[1]/ul/li[2]/a/span[2]').get_attribute('innerHTML')
+            reaction_sad = driver.find_element_by_xpath('//*[@id="spiLayer"]/div[1]/ul/li[3]/a/span[2]').get_attribute('innerHTML')
+            reaction_angry = driver.find_element_by_xpath('//*[@id="spiLayer"]/div[1]/ul/li[4]/a/span[2]').get_attribute('innerHTML')
+            reaction_want = driver.find_element_by_xpath('//*[@id="spiLayer"]/div[1]/ul/li[5]/a/span[2]').get_attribute('innerHTML')
+        except:
+            reaction_good = 0
+            reaction_warm = 0
+            reaction_sad = 0
+            reaction_angry = 0
+            reaction_want = 0
 
         news_dict[idx]['reaction_good'] = reaction_good
         news_dict[idx]['reaction_warm'] = reaction_warm
