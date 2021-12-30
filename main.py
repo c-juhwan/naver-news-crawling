@@ -25,7 +25,7 @@ if __name__ == "__main__":
                         help='End date to search, expected form: YYYYMMDD')
     parser.add_argument('--search_list_path', type=str,
                         default='./data/id_code.csv',
-                        help='Allowed press to search')
+                        help='List of keywords to search')
     parser.add_argument('--allowed_press_path', type=str,
                         default='./data/allowed_press.txt',
                         help='Allowed press to search')

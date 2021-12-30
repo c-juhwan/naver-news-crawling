@@ -80,7 +80,7 @@ def crawling(args):
                     req = requests.get(next_page_url, headers=headers)
                     soup = BeautifulSoup(req.text, 'html.parser')
                     break
-
+    
     # Article content / publish_date / modify_date / reaction
     driver = webdriver.Chrome(args.webdriver_path)
 
@@ -92,7 +92,10 @@ def crawling(args):
         
         # 기사 내용
         content_div = soup.find('div', {'class' : '_article_body_contents'})
-        content = content_div.get_text()
+        try:
+            content = content_div.get_text()
+        except:
+            content = ''
         content = content.replace("\n", "")
         content = content.replace("\t", "")
         content = content.replace("// flash 오류를 우회하기 위한 함수 추가function _flash_removeCallback() {}", "")
@@ -100,11 +103,15 @@ def crawling(args):
 
         # 기사 작성/수정 시간
         sponsor_div = soup.find('div', {'class' : 'sponsor'})
-        dates = sponsor_div.find_all('span', {'class' : 't11'})
+        try:
+            dates = sponsor_div.find_all('span', {'class' : 't11'})
 
-        news_dict[idx]['publish_date'] = dates[0].string
-        if len(dates) == 2:
-            news_dict[idx]['modify_date'] = dates[1].string
+            news_dict[idx]['publish_date'] = dates[0].string
+            if len(dates) == 2:
+                news_dict[idx]['modify_date'] = dates[1].string
+        except:
+            news_dict[idx]['publish_date'] = ''
+            news_dict[idx]['modify_date'] = ''
 
         # 기사 반응
         try:
